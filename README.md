@@ -19,7 +19,7 @@ composer require cydh/dp2ra
 Then include autoload in PHP file (example: parse_item.php)
 
 ```php
-require 'vendor/autoload.php';
+require_once './vendor/autoload.php';
 
 $convert = new Cydh\DP2RA\Items([
     "input" => "path/to/item_db.json",
