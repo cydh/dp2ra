@@ -1,0 +1,20 @@
+{
+  "name": "cydh/dp2ra",
+  "type": "library",
+  "description": "Convert Divine Pride item json-fetched info to rAthena database files",
+  "homepage": "https://github.com/cydh",
+  "authors" : [
+    {
+      "name": "Cydh"
+    }
+  ],
+  "require": {
+    "php": "^7.1.3"
+  },
+  "autoload": {
+      "psr-4": {
+          "Cydh\\DP2RA\\": "src/"
+      }
+  },
+  "license": "GPL-3.0-only"
+}
