@@ -221,7 +221,7 @@ class Items
             print "Cannot write output file ".$this->out_moveinfo_file.PHP_EOL;
             return;
         }
-        print "Secondary vessel was prepared at ".$this->out_itemdb_file.PHP_EOL;
+        print "Secondary vessel was prepared at ".$this->out_moveinfo_file.PHP_EOL;
     }
 
     public function parseData($write_output = true)

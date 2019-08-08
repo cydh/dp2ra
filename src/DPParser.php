@@ -2,8 +2,6 @@
 namespace Cydh\DP2RA;
 
 use Cydh\DP2RA\Enum;
-use Cydh\DP2RA\Location;
-use Cydh\DP2RA\View;
 
 class DPParser
 {
@@ -280,6 +278,168 @@ class DPParser
         if ($move_flag["auction"])
             $flag |= 256;
         return $flag;
+    }
+
+    static public function monsterMode($ai, $class, $attr)
+    {
+        $mode = Enum\Monster\AegisAI::toMode($ai);
+        $mode |= Enum\Monster\AegisClass::toMode($class);
+        $mode |= Enum\Monster\AegisAttr::toMode($attr);
+        return $mode;
+    }
+
+    static public function monsterSkills($mobname, $mobid, array $skills = [])
+    {
+        $data = [];
+        foreach ($skills as $s) {
+            //$ms = "//ID:$s['skillId'],ID:$s['skillId'],State:$s['status'],Lv:$s['level'],Chance:$s['chance'],Cast:$s['casttime'],Delay:$s['delay'],Cancel:$s['interruptable'],Cond:$s['condition'],CondVal:$s['conditionValue']\r\n";
+            // Condition
+            switch (($condition = $s['condition'])) {
+                case 'IF_ENEMYCOUNT':
+                    $condition = 'attackpcge';
+                    break;
+                case 'IF_SKILLUSE':
+                    $condition = 'skillused';
+                    break;
+                case 'IF_HP':
+                    $condition = 'myhpltmaxrate';
+                    break;
+                case 'IF_COMRADEHP':
+                    $condition = 'friendhpltmaxrate';
+                    break;
+                case 'IF_MAGICLOCKED':
+                    $condition = 'casttargeted';
+                    break;
+                case 'IF_RANGEATTACKED':
+                    $condition = 'longrangeattacked';
+                    break;
+                case 'IF_SLAVENUM':
+                    $condition = 'slavele';
+                    break;
+                case 'IF_RUDEATTACK':
+                    $condition = 'rudeattacked';
+                    break;
+                default:
+                    $condition = 'always';
+                    break;
+            }
+
+            // State
+            switch (($state = $s['status'])) {
+                case 'IDLE_ST':
+                    $state = 'idle';
+                    break;
+                case 'RMOVE_ST':
+                    $state = 'walk';
+                    break;
+                case 'RUSH_ST':
+                    $state = 'chase';
+                    break;
+                case 'SEARCH_ST':
+                    $state = 'walk';
+                    break;
+                case 'FOLLOW_ST':
+                    $state = 'follow';
+                    break;
+                case 'BERSERK_ST':
+                    //$state = 'angry';
+                    $state = 'attack';
+                    break;
+                case 'FIGHT_ST':
+                    $state = 'attack';
+                    break;
+                case 'MOVEENEMY_ST':
+                    $state = $s['status'];
+                    break;
+                case 'MOVEHELP_ST':
+                    $state = $s['status'];
+                    break;
+                case 'DEAD_ST':
+                    $state = 'dead';
+                    break;
+                case 'MOVEITEM_ST':
+                    $state = $s['status'];
+                    break;
+                case 'ABNORMAL_ST':
+                    $state = $s['status'];
+                    break;
+            }
+
+            // Target
+            switch ($s['skillId']) {
+                case Enum\Skill::MG_SIGHT:
+                case Enum\Skill::AL_PNEUMA:
+                case Enum\Skill::AL_TELEPORT:
+                case Enum\Skill::TF_HIDING:
+                case Enum\Skill::AS_CLOAKING:
+                case Enum\Skill::KN_TWOHANDQUICKEN:
+                    $target = Enum\SkillTarget::TO_SELF;
+                    break;
+                case Enum\Skill::AL_HEAL:
+                    if ($condition == 'friendhpltmaxrate') {
+                        $target = Enum\SkillTarget::TO_FRIEND;
+                    }
+                    else {
+                        $target = Enum\SkillTarget::TO_SELF;
+                    }
+                    break;
+                default:
+                    $target = Enum\SkillTarget::TO_ENEMY;
+                    break;
+            }
+            $condval = $s['conditionValue'];
+            // skillused/afterskill
+            if ($condition == 'skillused' || $condition == 'afterskill') {
+                switch ($s['conditionValue']) {
+                    case 'MG_FIREWALL': 	$condval = Enum\Skill::MG_FIREWALL; break;
+                    case 'AS_GRIMTOOTH': 	$condval = Enum\Skill::AS_GRIMTOOTH; break;
+                }
+            }
+            $data[] = [
+                "MobID" => $mobid,
+                "Info" => $mobname."@SKILL_".$s['skillId'],
+                "State" => $state,
+                "SkillID" => $s['skillId'],
+                "SkillLv" => $s['skillId'],
+                "Rate" => $s['chance'],
+                "CastTime" => $s['casttime'],
+                "Delay" => $s['delay'],
+                "Cancelable" => $s['interruptable'],
+                "Target" => $target,
+                "Condition" => $condition,
+                "ConditionValue" => $condval,
+                "Val1" => null,
+                "Val2" => null,
+                "Val3" => null,
+                "Val4" => null,
+                "Val5" => null,
+                "Emotion" => null,
+                "Chat" => null,
+            ];
+        }
+        return $data;
+    }
+
+    static public function monsterSpawn($is_mvp, $mobname, $mobid, array $spawn = [])
+    {
+        $data = [];
+        //<map name>,<x>,<y>,<xs>,<ys>%TAB%monster%TAB%<monster name>%TAB%<mob id>,<amount>,<delay1>,<delay2>,<event>{,<mob size>,<mob ai>}
+        foreach ($spawn as $s) {
+            $data[] = [
+                'map' => $s['mapname'],
+                'x' => 0,
+                'y' => 0,
+                'xs' => 0,
+                'ys' => 0,
+                'type' => $is_mvp ? "monster" : "boss_monster",
+                'name' => $mobname,
+                'mobid' => $mobid,
+                'amount' => $s['amount'],
+                'delay1' => $s['respawnTime'],
+                'delay2' => 0,
+            ];
+        }
+        return $data;
     }
 
 }
