@@ -21,7 +21,7 @@ Then include autoload in PHP file (example: parse_item.php)
 ```php
 require_once './vendor/autoload.php';
 
-$convert = new Cydh\DP2RA\Items([
+Cydh\DP2RA\Items::parse([
     "input" => "path/to/item_db.json",
     "output_itemdb" => "output/path/item_db.txt",
     "output_tradedb" => "output/path/item_trade.txt",
@@ -33,5 +33,7 @@ $convert = new Cydh\DP2RA\Items([
 Make new issue or new pull request. This version is under development
 
 ### TODO
-  * Parser for card compound location
-  * Parser for applicable Job
+  * Items Parser
+    * Card compound location
+    * Applicable Job
+  * Monster Parser
