@@ -11,7 +11,7 @@ class DPParser
         return trim($name);
     }
 
-    static public function itemTypeLoc($type, $subtype, $acc, $compos)
+    static public function itemTypeLoc($type, $subtype, $acc, $compos, $location)
     {
         $type_ = null;
         $loc_ = null;
@@ -25,7 +25,7 @@ class DPParser
                 $type_ = Enum\Type::IT_ARMOR;
                 // same type with pet eq & equip
                 // pet eq has same type and subtype with pet equip
-                $loc_ = DPParser::parseSubTypeIDArmor((int)$subtype);
+                $loc_ = DPParser::parseSubTypeIDArmor((int)$subtype, $location);
                 break;
             case 3:
                 $type_ = Enum\Type::IT_HEALING;
@@ -62,15 +62,39 @@ class DPParser
         ];
     }
 
-    static public function parseSubTypeIDArmor($subtype)
+    static public function parseSubTypeIDArmor($subtype, $location)
     {
         switch ($subtype) {
-            case 512: return Enum\Location::HEAD_TOP; // all HG from Divine-pride is 512
+            case 512:
+                $loc = null;
+                if (preg_match('/upper/i', $location)) {
+                    $loc .= Enum\Location::HEAD_TOP;
+                }
+                if (preg_match('/middle/i', $location)) {
+                    $loc .= Enum\Location::HEAD_MID;
+                }
+                if (preg_match('/lower/i', $location)) {
+                    $loc .= Enum\Location::HEAD_LOW;
+                }
+                return $loc ? $loc : Enum\Location::HEAD_TOP;
             case 513: return Enum\Location::ARMOR;
             case 514: return Enum\Location::SHIELD;
             case 515: return Enum\Location::GARMENT;
             case 516: return Enum\Location::FOOTGEAR;
             case 517: return Enum\Location::ACC_LEFT|Enum\Location::ACC_RIGHT;
+            case 519:
+                $loc = null;
+                if (preg_match('/upper/i', $location)) {
+                    $loc .= Enum\Location::COSTUME_HEAD_TOP;
+                }
+                if (preg_match('/middle/i', $location)) {
+                    $loc .= Enum\Location::COSTUME_HEAD_MID;
+                }
+                if (preg_match('/lower/i', $location)) {
+                    $loc .= Enum\Location::COSTUME_HEAD_LOW;
+                }
+                return $loc ? $loc : Enum\Location::COSTUME_HEAD_TOP;
+            case 522: return Enum\Location::COSTUME_GARMENT;
         }
         return null;
     }
@@ -90,7 +114,7 @@ class DPParser
 
     static public function parseSubTypeID($subtype, &$loc, &$view)
     {
-        if (($w_idx = ($subtype & 0xFF))) { // 255
+        if ($subtype >= 0xFF && $subtype < 0x200 && ($w_idx = ($subtype & 0xFF))) { // 255
             $info = [
                 [
                     'loc' => Enum\Location::WEAPON,
@@ -203,7 +227,7 @@ class DPParser
             }
         }
 
-        if ($subtype & 0x400) {
+        if ($subtype >= 0x400) {
             switch ($subtype) {
                 case 1024:
                     $view = Enum\View::AMMO_ARROW;

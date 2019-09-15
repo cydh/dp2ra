@@ -75,26 +75,28 @@ class Items
         $this->item['type'] = null;
         $this->item['price_buy'] = $this->data["price"];
         $this->item['price_sell'] = null;
-        $this->item['weight'] = $this->data["weight"];
+        $this->item['weight'] = $this->data["weight"] * 10;
 
         $this->item['attack'] = $this->parseAttack();
 
         $this->item['defense'] = $this->data["defense"];
-        $this->item['range'] = $this->data["range"];
+        $this->item['range'] = $this->parseRange();
         $this->item['slots'] = $this->data["slots"];
 
         $this->item['job'] = null;
         $this->item['class'] = null;
         $this->parseJobClass();
 
-        $this->item['gender'] = $this->data["gender"];
+        $this->item['gender'] = null;
         $this->item['loc'] = null;
 
         $this->item['weaponLevel'] = $this->data["weaponLevel"];
         $this->item['req_lv'] = $this->parseItemReqLevel();
         $this->item['refinable'] = $this->data["refinable"];
-        $this->item['view'] = null;
+        $this->item['view'] = (!empty($this->data["classNum"])) ? $this->data["classNum"] : null;
+
         $this->parseItemTypeLoc();
+        $this->parseGender();
 
         //$this->item['indestructible'] = '{ bonus bUn ..'.$this->data["indestructible"].'; }';
         //if ($this->data["attribute"])
@@ -121,7 +123,7 @@ class Items
 
     private function parseItemTypeLoc()
     {
-        $type_loc = DPParser::itemTypeLoc($this->data["itemTypeId"], $this->data["itemSubTypeId"], $this->data["accessory"], $this->data["compositionPos"]);
+        $type_loc = DPParser::itemTypeLoc($this->data["itemTypeId"], $this->data["itemSubTypeId"], $this->data["accessory"], $this->data["compositionPos"], $this->data["location"]);
         $this->item['type'] = $type_loc['type'];
         $this->item['loc'] = $type_loc['loc'];
         $this->item['view'] = $type_loc['view'];
@@ -129,7 +131,6 @@ class Items
         if ($this->item['loc'] != null && $this->item['job'] == null) {
             $this->item['job'] = "0xFFFFFFFF";
             $this->item['class'] = "63";
-            $this->item['gender'] = "2";
         }
     }
 
@@ -137,14 +138,40 @@ class Items
     {
         $attack = null;
 
-        if ($this->data["attack"] && $this->data["matk"])
+        if ($this->data["attack"] && $this->data["matk"]) {
             $attack = $this->data["attack"].":".$this->data["matk"];
-        elseif (!$this->data["attack"] && $this->data["matk"])
+        } elseif (!$this->data["attack"] && $this->data["matk"]) {
             $attack = "0:".$this->data["matk"];
-        elseif ($this->data["attack"] && !$this->data["matk"])
-            $attack = "0";
+        } elseif ($this->data["attack"] && !$this->data["matk"]) {
+            $attack = $this->data["attack"];
+        }
 
         return $attack;
+    }
+
+    private function parseRange()
+    {
+        return $this->data["range"];
+    }
+
+    private function parseGender()
+    {
+        if ($this->item['type'] == Enum\Type::IT_ETC || $this->item['type'] == Enum\Type::IT_ETC) {
+            return;
+        }
+
+        // Somewhat can't rely on $this->data["gender"]
+
+        if ($this->item['type'] == Enum\Type::IT_WEAPON) {
+            if ($this->item['view'] == Enum\View::WEAPON_INSTRUMENT) {
+                $this->item['gender'] = Enum\Gender::MALE;
+                return;
+            } elseif ($this->item['view'] == Enum\View::WEAPON_INSTRUMENT) {
+                $this->item['gender'] = Enum\Gender::FEMALE;
+                return;
+            }
+        }
+        $this->item['gender'] = Enum\Gender::BOTH;
     }
 
     private function parseJobClass()
