@@ -47,7 +47,7 @@ class Monsters
         $this->entry['ID'] = $this->current_id;
         $this->entry['Sprite_Name'] = str_replace("'", "", DPParser::clearName($this->current_data["dbname"]));
         $this->entry['kROName'] = str_replace("'", "", DPParser::clearName(isset($this->current_data["name"]) ? $this->current_data["name"] : $this->current_data["dbname"]));
-        $this->entry['iROName'] = str_replace("'", "", DPParser::clearName($this->current_data["dbname"]));
+        $this->entry['iROName'] = $this->entry['kROName'];
 
         $stats = &$this->current_data["stats"];
         $this->entry['LV'] = $stats["level"];
@@ -75,7 +75,7 @@ class Monsters
         if ($stats["mvp"]) {
             $this->entry['Mode'] |= Enum\Monster\Mode::MD_MVP;
         }
-        $this->entry['Mode'] = "0x".dechex($this->entry['Mode']);
+        $this->entry['Mode'] = sprintf("0x%07X", $this->entry['Mode']);
         $this->entry['Speed'] = (int)$stats["movementSpeed"];
         $this->entry['aDelay'] = (int)$stats["rechargeTime"];
         $this->entry['aMotion'] = (int)$stats["attackSpeed"];
